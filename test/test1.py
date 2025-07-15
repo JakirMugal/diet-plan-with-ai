@@ -8,7 +8,7 @@ import tempfile
 from weasyprint import HTML
 
 # Set your Groq API key
-os.environ["GROQ_API_KEY"] = "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"
+os.environ["GROQ_API_KEY"] = ""
 
 client = Groq(api_key=os.environ["GROQ_API_KEY"])
 
