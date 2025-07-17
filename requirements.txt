@@ -4,3 +4,4 @@ pandas
 jinja2
 fpdf
 reportlab
+groq
