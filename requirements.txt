@@ -1,0 +1,6 @@
+streamlit
+xhtml2pdf
+pandas
+jinja2
+fpdf
+reportlab
