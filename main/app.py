@@ -118,6 +118,7 @@ Note: [brief summary about the day’s nutrition]<br><br>
 ---
 
 Repeat for Tuesday to Sunday using the same structure.
+Note : If you see supliments then use the supliment with with in the meal.
 """
 
             prompt_lines.append(prompt)
