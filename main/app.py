@@ -3,16 +3,16 @@ from groq import Groq
 import os
 from xhtml2pdf import pisa
 from io import BytesIO
-from dotenv import load_dotenv
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
+# from dotenv import load_dotenv
 from datetime import datetime, time
-from pathlib import Path
+# from pathlib import Path
 
-# Explicitly load the .env file from the current script directory
-dotenv_path = Path(__file__).parent / '.env'
-load_dotenv(dotenv_path=dotenv_path)
+# # Explicitly load the .env file from the current script directory
+# dotenv_path = Path(__file__).parent / '.env'
+# load_dotenv(dotenv_path=dotenv_path)
 
-api_key = os.getenv("GROQ_API_KEY")
+api_key = st.secrets["GROQ_API_KEY"]
 
 # Debug: show if key is loaded
 import streamlit as st
