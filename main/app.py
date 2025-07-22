@@ -3,19 +3,10 @@ from groq import Groq
 import os
 from xhtml2pdf import pisa
 from io import BytesIO
-# from dotenv import load_dotenv
-# from dotenv import load_dotenv
 from datetime import datetime, time
-# from pathlib import Path
-
-# # Explicitly load the .env file from the current script directory
-# dotenv_path = Path(__file__).parent / '.env'
-# load_dotenv(dotenv_path=dotenv_path)
-
 api_key = st.secrets["GROQ_API_KEY"]
 
 # Debug: show if key is loaded
-import streamlit as st
 if not api_key:
     st.error("GROQ_API_KEY not found. Check your .env file path.")
 else:
@@ -37,7 +28,7 @@ def generate_time_slots(interval_minutes=30):
 
 time_options = generate_time_slots()
 
-# ---- Mandatory Fields First ----
+# ---- Required Body Metrics ----
 st.header("📏 Body Metrics (Required)")
 height = st.number_input("Height (in cm):", min_value=50.0, max_value=250.0, step=0.1)
 weight = st.number_input("Weight (in kg):", min_value=10.0, max_value=300.0, step=0.1)
@@ -46,6 +37,11 @@ weight = st.number_input("Weight (in kg):", min_value=10.0, max_value=300.0, ste
 st.header("⚙️ Additional Preferences (Optional)")
 diet_type = st.multiselect("Diet Type(s):", ["Vegetarian", "Eggitarian", "Non-Vegetarian"])
 do_workout = st.selectbox("Do you workout?", ["", "Yes", "No"])
+
+time_options = [
+    "4:00 AM", "5:00 AM", "6:00 AM", "7:00 AM", "8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM",
+    "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM", "6:00 PM", "7:00 PM", "8:00 PM", "9:00 PM"
+]
 
 workout_start_time = workout_end_time = None
 if do_workout == "Yes":
@@ -83,6 +79,19 @@ for supp in selected_supplements:
 st.header("💬 Personal Preferences (Optional)")
 custom_preferences = st.text_area("Tell us more about your preferences, allergies, or lifestyle:")
 
+# ---- Indian Cuisine Preferences Section ----
+st.header("🍛 Indian Cuisine Preferences (Optional)")
+indian_cuisines = [
+    "North Indian",
+    "South Indian",
+    "Gujarati",
+    "Bengali",
+    "Rajasthani",
+    "Maharashtrian",
+    "Kerala"
+]
+selected_indian_cuisines = st.multiselect("Select your preferred Indian cuisines:", indian_cuisines)
+
 # ---- Submit Button ----
 if st.button("Generate Diet Plan"):
     if not height or not weight:
@@ -116,16 +125,15 @@ if st.button("Generate Diet Plan"):
                     prompt_lines.append(f"  - {supp} at {supplement_timings[supp]}")
             if custom_preferences:
                 prompt_lines.append(f"- User Preferences: {custom_preferences.strip()}")
-
-
-
+            if selected_indian_cuisines:
+                prompt_lines.append(f"- Preferred Indian Cuisines: {', '.join(selected_indian_cuisines)}")
 
             # Output the constructed prompt (you can replace this with API call or display result)
             st.success("Prompt generated successfully:")
             st.text("\n".join(prompt_lines))
 
             prompt = """
-Create a 7-day indian meal plan in clean HTML format using the exact structure and styling below.
+Create a 7-day Indian meal plan in clean HTML format using the exact structure and styling below.
 
 📌 HTML Formatting Rules:
 - Day name (e.g., "Monday") should be in <h2> tags to act as the main heading (large and bold).
