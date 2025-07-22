@@ -11,31 +11,32 @@ client = Groq(api_key=os.environ["GROQ_API_KEY"])
 
 st.title("🎯 AI-Powered Diet Planner (Groq + LLaMA)")
 
-# ---- Mandatory Fields First ----
-st.header("📏 Body Metrics (Required)")
+# ---- Mandatory Fields First ----st.header("📏 Body Metrics (Required)")
 height = st.number_input("Height (in cm):", min_value=50.0, max_value=250.0, step=0.1)
 weight = st.number_input("Weight (in kg):", min_value=10.0, max_value=300.0, step=0.1)
 
 # ---- Optional Fields ----
 st.header("⚙️ Additional Preferences (Optional)")
-diet_type = st.radio("Diet Type:", ["", "Vegetarian", "Non-Vegetarian"], index=0)
+diet_type = st.multiselect("Diet Type(s):", ["Vegetarian", "Eggitarian", "Non-Vegetarian"])
 do_workout = st.selectbox("Do you workout?", ["", "Yes", "No"])
 workout_time = st.time_input("Workout Time (if any):") if do_workout == "Yes" else None
 body_fat = st.slider("Body Fat Percentage (optional):", 1, 60) if st.checkbox("Add Body Fat %") else None
 goal = st.selectbox("What's your goal?", ["", "Weight Loss", "Weight Gain"])
 disease = st.text_area("Any diseases or medical conditions? (optional)")
 
-# ---- New Supplements Section ----
+# ---- Supplements Section ----
 st.header("💊 Supplements (Optional)")
 supplements_list = ["Multivitamin", "Omega-3", "Vitamin D", "Protein Powder", "Creatine", "Calcium", "Magnesium"]
-
-# Multiselect for supplements
 selected_supplements = st.multiselect("Select supplements you take:", supplements_list)
 
-# Dictionary to hold timing inputs for each selected supplement
+# Timings for supplements
 supplement_timings = {}
 for supp in selected_supplements:
     supplement_timings[supp] = st.time_input(f"Timing for {supp}:", key=f"time_{supp}")
+
+# ---- Chat Box for Custom Preferences ----
+st.header("💬 Personal Preferences (Optional)")
+custom_preferences = st.text_area("Tell us more about your preferences, allergies, or lifestyle:")
 
 # ---- Submit Button ----
 if st.button("Generate Diet Plan"):
@@ -44,7 +45,6 @@ if st.button("Generate Diet Plan"):
     else:
         with st.spinner("Creating personalized diet plan..."):
 
-            # ----- Build Prompt Conditionally -----
             prompt_lines = [
                 f"Create a personalized diet plan for someone with:",
                 f"- Height: {height} cm",
@@ -52,7 +52,7 @@ if st.button("Generate Diet Plan"):
             ]
 
             if diet_type:
-                prompt_lines.append(f"- Diet Type: {diet_type}")
+                prompt_lines.append(f"- Diet Type(s): {', '.join(diet_type)}")
             if do_workout:
                 prompt_lines.append(f"- Workout: {do_workout}")
             if workout_time:
@@ -63,13 +63,18 @@ if st.button("Generate Diet Plan"):
                 prompt_lines.append(f"- Goal: {goal}")
             if disease:
                 prompt_lines.append(f"- Medical Conditions: {disease.strip()}")
-
-            # Add supplements and their timings to prompt
             if selected_supplements:
                 prompt_lines.append("- Supplements taken:")
                 for supp in selected_supplements:
                     time_str = supplement_timings[supp].strftime('%H:%M')
                     prompt_lines.append(f"  - {supp} at {time_str}")
+            if custom_preferences:
+                prompt_lines.append(f"- User Preferences: {custom_preferences.strip()}")
+
+            # Output the constructed prompt (you can replace this with API call or display result)
+            st.success("Prompt generated successfully:")
+            st.text("\n".join(prompt_lines))
+
             prompt = """
 Create a 7-day meal plan in clean HTML format using the exact structure and styling below.
 
@@ -118,7 +123,10 @@ Note: [brief summary about the day’s nutrition]<br><br>
 ---
 
 Repeat for Tuesday to Sunday using the same structure.
-Note : If you see supliments then use the supliment with with in the meal.
+Note : Please be carefull with the following points.
+1. If you see supliments then use the supliment with with in the meal.
+2. Please create Indian diet plan.
+3. If there is something written in the preferences be carefull with those and create according to the preferences.
 """
 
             prompt_lines.append(prompt)
