@@ -21,7 +21,16 @@ diet_type = st.multiselect("Diet Type(s):", ["Vegetarian", "Eggitarian", "Non-Ve
 do_workout = st.selectbox("Do you workout?", ["", "Yes", "No"])
 workout_time = st.time_input("Workout Time (if any):") if do_workout == "Yes" else None
 body_fat = st.slider("Body Fat Percentage (optional):", 1, 60) if st.checkbox("Add Body Fat %") else None
-goal = st.selectbox("What's your goal?", ["", "Weight Loss", "Weight Gain"])
+goal = st.selectbox("What's your primary fitness goal?", [
+    "", 
+    "Fat Loss", 
+    "Muscle Building", 
+    "Recomposition (Lose fat + build muscle)", 
+    "Improve Endurance", 
+    "Improve General Health", 
+    "Sports Performance", 
+    "Other"
+])
 disease = st.text_area("Any diseases or medical conditions? (optional)")
 
 # ---- Supplements Section ----
