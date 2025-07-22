@@ -5,3 +5,4 @@ jinja2
 fpdf
 reportlab
 groq
+python-dotenv

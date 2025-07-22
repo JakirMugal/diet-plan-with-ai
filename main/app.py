@@ -3,15 +3,42 @@ from groq import Groq
 import os
 from xhtml2pdf import pisa
 from io import BytesIO
+from dotenv import load_dotenv
+from dotenv import load_dotenv
+from datetime import datetime, time
+from pathlib import Path
 
-# Set your Groq API key
-os.environ["GROQ_API_KEY"] = "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"
+# Explicitly load the .env file from the current script directory
+dotenv_path = Path(__file__).parent / '.env'
+load_dotenv(dotenv_path=dotenv_path)
 
-client = Groq(api_key=os.environ["GROQ_API_KEY"])
+api_key = os.getenv("GROQ_API_KEY")
+
+# Debug: show if key is loaded
+import streamlit as st
+if not api_key:
+    st.error("GROQ_API_KEY not found. Check your .env file path.")
+else:
+    st.success("API key loaded successfully!")
+
+
+client = Groq(api_key=api_key)
 
 st.title("🎯 AI-Powered Diet Planner (Groq + LLaMA)")
 
-# ---- Mandatory Fields First ----st.header("📏 Body Metrics (Required)")
+# Generate AM/PM time slots (every 30 minutes)
+def generate_time_slots(interval_minutes=30):
+    times = []
+    for hour in range(24):
+        for minute in range(0, 60, interval_minutes):
+            t = time(hour, minute)
+            times.append(t.strftime('%I:%M %p'))
+    return times
+
+time_options = generate_time_slots()
+
+# ---- Mandatory Fields First ----
+st.header("📏 Body Metrics (Required)")
 height = st.number_input("Height (in cm):", min_value=50.0, max_value=250.0, step=0.1)
 weight = st.number_input("Weight (in kg):", min_value=10.0, max_value=300.0, step=0.1)
 
@@ -19,18 +46,27 @@ weight = st.number_input("Weight (in kg):", min_value=10.0, max_value=300.0, ste
 st.header("⚙️ Additional Preferences (Optional)")
 diet_type = st.multiselect("Diet Type(s):", ["Vegetarian", "Eggitarian", "Non-Vegetarian"])
 do_workout = st.selectbox("Do you workout?", ["", "Yes", "No"])
-workout_time = st.time_input("Workout Time (if any):") if do_workout == "Yes" else None
+
+workout_start_time = workout_end_time = None
+if do_workout == "Yes":
+    workout_start_time = st.selectbox("Workout Start Time (AM/PM):", time_options)
+    workout_end_time = st.selectbox("Workout End Time (AM/PM):", time_options)
+
 body_fat = st.slider("Body Fat Percentage (optional):", 1, 60) if st.checkbox("Add Body Fat %") else None
-goal = st.selectbox("What's your primary fitness goal?", [
-    "", 
-    "Fat Loss", 
-    "Muscle Building", 
-    "Recomposition (Lose fat + build muscle)", 
-    "Improve Endurance", 
-    "Improve General Health", 
-    "Sports Performance", 
-    "Other"
-])
+
+goal = st.multiselect(
+    "What's your primary fitness goal?", 
+    [
+        "Fat Loss", 
+        "Muscle Building", 
+        "Recomposition (Lose fat + build muscle)", 
+        "Improve Endurance", 
+        "Improve General Health", 
+        "Sports Performance", 
+        "Other"
+    ]
+)
+
 disease = st.text_area("Any diseases or medical conditions? (optional)")
 
 # ---- Supplements Section ----
@@ -38,10 +74,10 @@ st.header("💊 Supplements (Optional)")
 supplements_list = ["Multivitamin", "Omega-3", "Vitamin D", "Protein Powder", "Creatine", "Calcium", "Magnesium"]
 selected_supplements = st.multiselect("Select supplements you take:", supplements_list)
 
-# Timings for supplements
+# Timings for supplements using dropdown
 supplement_timings = {}
 for supp in selected_supplements:
-    supplement_timings[supp] = st.time_input(f"Timing for {supp}:", key=f"time_{supp}")
+    supplement_timings[supp] = st.selectbox(f"Timing for {supp}:", time_options, key=f"time_{supp}")
 
 # ---- Chat Box for Custom Preferences ----
 st.header("💬 Personal Preferences (Optional)")
@@ -62,30 +98,34 @@ if st.button("Generate Diet Plan"):
 
             if diet_type:
                 prompt_lines.append(f"- Diet Type(s): {', '.join(diet_type)}")
-            if do_workout:
-                prompt_lines.append(f"- Workout: {do_workout}")
-            if workout_time:
-                prompt_lines.append(f"- Workout Time: {workout_time.strftime('%H:%M')}")
+            if do_workout == "Yes":
+                prompt_lines.append(f"- Workout: Yes")
+                if workout_start_time and workout_end_time:
+                    prompt_lines.append(f"- Workout Time: From {workout_start_time} to {workout_end_time}")
+            elif do_workout == "No":
+                prompt_lines.append(f"- Workout: No")
             if body_fat:
                 prompt_lines.append(f"- Body Fat %: {body_fat}")
             if goal:
-                prompt_lines.append(f"- Goal: {goal}")
+                prompt_lines.append(f"- Goal(s): {', '.join(goal)}")
             if disease:
                 prompt_lines.append(f"- Medical Conditions: {disease.strip()}")
             if selected_supplements:
                 prompt_lines.append("- Supplements taken:")
                 for supp in selected_supplements:
-                    time_str = supplement_timings[supp].strftime('%H:%M')
-                    prompt_lines.append(f"  - {supp} at {time_str}")
+                    prompt_lines.append(f"  - {supp} at {supplement_timings[supp]}")
             if custom_preferences:
                 prompt_lines.append(f"- User Preferences: {custom_preferences.strip()}")
+
+
+
 
             # Output the constructed prompt (you can replace this with API call or display result)
             st.success("Prompt generated successfully:")
             st.text("\n".join(prompt_lines))
 
             prompt = """
-Create a 7-day meal plan in clean HTML format using the exact structure and styling below.
+Create a 7-day indian meal plan in clean HTML format using the exact structure and styling below.
 
 📌 HTML Formatting Rules:
 - Day name (e.g., "Monday") should be in <h2> tags to act as the main heading (large and bold).
@@ -136,6 +176,7 @@ Note : Please be carefull with the following points.
 1. If you see supliments then use the supliment with with in the meal.
 2. Please create Indian diet plan.
 3. If there is something written in the preferences be carefull with those and create according to the preferences.
+4. Be carfull about the timings as workout time and supliment time should be considered very seriouslly.
 """
 
             prompt_lines.append(prompt)
@@ -146,7 +187,7 @@ Note : Please be carefull with the following points.
             response = client.chat.completions.create(
                 model="llama-3.1-8b-instant",
                 messages=[{"role": "user", "content": full_prompt}],
-                temperature=0.5,
+                temperature=0.8,
                 max_tokens=1024*8
             )
 
