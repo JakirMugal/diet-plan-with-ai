@@ -27,7 +27,6 @@ def generate_time_slots(interval_minutes=30):
     return times
 
 time_options = generate_time_slots()
-
 # ---- Required Body Metrics ----
 st.header("📏 Body Metrics (Required)")
 height = st.number_input("Height (in cm):", min_value=50.0, max_value=250.0, step=0.1)
@@ -43,10 +42,11 @@ time_options = [
     "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM", "6:00 PM", "7:00 PM", "8:00 PM", "9:00 PM"
 ]
 
-workout_start_time = workout_end_time = None
+workout_start_time = workout_end_time = workout_days = None
 if do_workout == "Yes":
     workout_start_time = st.selectbox("Workout Start Time (AM/PM):", time_options)
     workout_end_time = st.selectbox("Workout End Time (AM/PM):", time_options)
+    workout_days = st.slider("How many days a week do you workout?", 1, 7)
 
 body_fat = st.slider("Body Fat Percentage (optional):", 1, 60) if st.checkbox("Add Body Fat %") else None
 
@@ -82,15 +82,21 @@ custom_preferences = st.text_area("Tell us more about your preferences, allergie
 # ---- Indian Cuisine Preferences Section ----
 st.header("🍛 Indian Cuisine Preferences (Optional)")
 indian_cuisines = [
-    "North Indian",
-    "South Indian",
-    "Gujarati",
-    "Bengali",
-    "Rajasthani",
-    "Maharashtrian",
-    "Kerala"
+    "North Indian", "South Indian", "Gujarati", "Bengali", 
+    "Rajasthani", "Maharashtrian", "Kerala"
 ]
 selected_indian_cuisines = st.multiselect("Select your preferred Indian cuisines:", indian_cuisines)
+
+# ---- Meal Preferences Section ----
+st.header("🍽️ Meal Preferences")
+num_meals = st.selectbox("How many meals do you want in a day?", [3, 4, 5, 6])
+create_specific_meal_times = st.checkbox("Do you want to specify meal timings?")
+
+meal_timings = {}
+if create_specific_meal_times:
+    st.subheader("🕒 Set Meal Timings")
+    for i in range(1, num_meals + 1):
+        meal_timings[f"Meal {i}"] = st.selectbox(f"Time for Meal {i}:", time_options, key=f"meal_time_{i}")
 
 # ---- Submit Button ----
 if st.button("Generate Diet Plan"):
@@ -111,6 +117,8 @@ if st.button("Generate Diet Plan"):
                 prompt_lines.append(f"- Workout: Yes")
                 if workout_start_time and workout_end_time:
                     prompt_lines.append(f"- Workout Time: From {workout_start_time} to {workout_end_time}")
+                if workout_days:
+                    prompt_lines.append(f"- Workout Frequency: {workout_days} days per week")
             elif do_workout == "No":
                 prompt_lines.append(f"- Workout: No")
             if body_fat:
@@ -128,9 +136,17 @@ if st.button("Generate Diet Plan"):
             if selected_indian_cuisines:
                 prompt_lines.append(f"- Preferred Indian Cuisines: {', '.join(selected_indian_cuisines)}")
 
-            # Output the constructed prompt (you can replace this with API call or display result)
+            # Meal details
+            prompt_lines.append(f"- Number of meals: {num_meals}")
+            if create_specific_meal_times:
+                prompt_lines.append("- Meal Timings:")
+                for meal, timing in meal_timings.items():
+                    prompt_lines.append(f"  - {meal} at {timing}")
+
+            # Output the constructed prompt (or send to API)
             st.success("Prompt generated successfully:")
             st.text("\n".join(prompt_lines))
+
 
             prompt = """
 Create a 7-day Indian meal plan in clean HTML format using the exact structure and styling below.
