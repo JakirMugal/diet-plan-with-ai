@@ -15,7 +15,7 @@ else:
 
 client = Groq(api_key=api_key)
 
-st.title("🎯 AI-Powered Diet Planner (Groq + LLaMA)")
+st.title("🎯 AI-Powered Diet Planner By Jakir")
 
 # Generate AM/PM time slots (every 30 minutes)
 def generate_time_slots(interval_minutes=30):
