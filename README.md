@@ -1,6 +1,6 @@
 # 🥗 Diet Plan with AI
 
-**Diet Plan with AI** is a Python-based web application that uses **Langchain** and **Streamlit** to generate personalized diet plans based on user preferences, goals, and health information. It leverages the power of AI to make nutrition planning simple, interactive, and effective.
+**Diet Plan with AI** is a Python-based web application that uses **GROQ** and **Streamlit** to generate personalized diet plans based on user preferences, goals, and health information. It leverages the power of AI to make nutrition planning simple, interactive, and effective.
 
 ---
 
